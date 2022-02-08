@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class Prefs with ChangeNotifier{
 
+  //and here
   static addNote(String note) async {
     var pref = await SharedPreferences.getInstance();
     if(pref.containsKey('notes')){

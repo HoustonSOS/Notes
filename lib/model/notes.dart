@@ -5,5 +5,6 @@ class Notes{
 
   void addNote(String note){
 
+    //some code here
   }
 }
