@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:localization/screens/notes.dart';
-
-import 'model/note.dart';
 void main() async {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -11,7 +9,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Notes',
       home: NotesPage(),

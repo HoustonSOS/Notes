@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:localization/services/prefs_service.dart';
+import 'package:localization/model/notes.dart';
 
 class NotesPage extends StatefulWidget {
   const NotesPage({Key? key}) : super(key: key);
@@ -10,16 +10,15 @@ class NotesPage extends StatefulWidget {
 }
 
 class _NotesPageState extends State<NotesPage> {
-  var note = TextEditingController();
 
-  List<String> notes = [];
-
+  var model = Notes();
 
   _createDialog(BuildContext context) {
     return showCupertinoDialog(
         barrierDismissible: true,
         context: context,
         builder: (context) {
+          var note = TextEditingController();
           return CupertinoAlertDialog(
             title: const Text("Create a note"),
             content: CupertinoTextField(
@@ -31,15 +30,13 @@ class _NotesPageState extends State<NotesPage> {
               CupertinoDialogAction(
                   onPressed: (){
                     if(note.text.isEmpty){
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Nothing to add"), duration: Duration(milliseconds: 500),));
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Nothing to add"), duration: Duration(milliseconds: 500),));
                       Navigator.pop(context);
                     }else {
-                      Prefs.addNote(note.text);
                       setState(() {
-                        getAll();
+                        model.add(note.text.trim());
                       });
                       Navigator.pop(context);
-                      note.clear();
                     }
                   },
                   child: const Text('Add'),
@@ -52,35 +49,9 @@ class _NotesPageState extends State<NotesPage> {
   @override
   void initState() {
     super.initState();
-    getAll();
-  }
-
-  Future<void> getAll() async {
-    notes = await Prefs.getNotes();
-  }
-
-  void deleteNote(String note) {
-    Prefs.deleteNote(note);
-    for (var element in notes) {
-      if (element == note) {
-        setState(() {
-          notes.remove(note);
-        });
-        break;
-      }
-    }
-  }
-
-  void editNote(String old, String _new) {
-    Prefs.editNote(old, _new);
-    for (int i = 0; i < notes.length; i++) {
-      if (notes[i] == old) {
-        setState(() {
-          notes[i] = _new;
-        });
-        break;
-      }
-    }
+    setState(() {
+      model.init();
+    });
   }
 
 
@@ -95,32 +66,30 @@ class _NotesPageState extends State<NotesPage> {
         title: const Text("Notes"),
         actions: [
           CupertinoButton(
-              child: Text("Clear", style: TextStyle(color: Colors.white, fontSize: 15),),
+              child: const Text("Clear", style: TextStyle(color: Colors.white, fontSize: 15),),
               onPressed: (){
-                if(notes.isEmpty){
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Nothing to clear"), duration: Duration(milliseconds: 500),));
+                if(model.notes.isEmpty){
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Nothing to clear"), duration: Duration(milliseconds: 500),));
                 }else {
                   setState(() {
-                    Prefs.clearAll();
-                    notes.clear();
+                    model.clear();
                   });
                 }
               }
           ),
         ],
       ),
-      body: notes.isEmpty
+      body: model.notes.isEmpty
           ? const Center(
               child: Text("No notes", style: TextStyle(color: Colors.white),),
             )
-          : RefreshIndicator(
-          child: ListView.builder(
-          itemCount: notes.length,
+          : ListView.builder(
+          itemCount: model.notes.length,
           itemBuilder: (context, index) {
-            var note = notes[index];
+            var note = model.notes[index].body;
             var editing = TextEditingController(text: note);
             return Dismissible(
-              background: Container(color: Colors.redAccent, child: Icon(CupertinoIcons.delete, color: Colors.white,),),
+              background: Container(color: Colors.redAccent, child: const Icon(CupertinoIcons.delete, color: Colors.white,),),
               key: Key(note),
               child: ListTile(
                 leading: const Icon(
@@ -129,7 +98,7 @@ class _NotesPageState extends State<NotesPage> {
                   size: 15,
                 ),
                 minLeadingWidth: 10,
-                title: Text(note, style: TextStyle(color: Colors.white),),
+                title: Text(note, style: const TextStyle(color: Colors.white),),
                 onTap: (){
                   showCupertinoDialog(
                       barrierDismissible: true,
@@ -146,17 +115,16 @@ class _NotesPageState extends State<NotesPage> {
                           actions: [
                             CupertinoDialogAction(
                                 onPressed: (){
-                                  editNote(note, editing.text.trim());
+                                  model.edit(model.notes[index], editing.text.trim());
                                   Navigator.pop(context);
                                 },
-                                child: Icon(CupertinoIcons.pencil, color: Colors.blue,)
+                                child: const Icon(CupertinoIcons.pencil, color: Colors.blue,)
                             ),
                             CupertinoDialogAction(
                                 onPressed: (){
-                                  deleteNote(note);
-                                  Navigator.pop(context);
+                                  model.delete(model.notes[index]);
                                 },
-                                child: Icon(CupertinoIcons.delete, color: Colors.blue,)
+                                child: const Icon(CupertinoIcons.delete, color: Colors.blue,)
                             ),
                           ],
                         );
@@ -165,16 +133,10 @@ class _NotesPageState extends State<NotesPage> {
               ),
               direction: DismissDirection.endToStart,
               onDismissed: (direction){
-                deleteNote(note);
+                model.delete(model.notes[index]);
               },
             );
           }),
-          onRefresh: () async {
-            setState(() {
-              getAll();
-            });
-          }
-      ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.blueGrey,
         elevation: 0,
