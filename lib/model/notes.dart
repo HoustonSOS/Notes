@@ -1,48 +1,57 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:localization/services/prefs_service.dart';
 import 'note.dart';
 
 class Notes{
   List<Note> notes = [];
-
-  void init() async => notes = decode(await Prefs.get());
-
+  Set<Note> selected = {};
+  void init() async {
+    var saved = await Prefs.get();
+    notes = _decode(saved);
+  }
   void add(String note){
     var _note = Note(body: note, createdOn: DateTime.now());
     notes.add(_note);
-    Prefs.push(encode());
+    Prefs.push(_encode());
   }
   void delete(Note note){
     for(var item in notes){
       if(note == item){
         notes.remove(item);
-        Prefs.push(encode());
+        Prefs.push(_encode());
         break;
       }
     }
   }
 
-  bool edit(Note from, String to){
+  void edit(Note from, String to) {
     for(int i = 0; i < notes.length; i++){
       if(from == notes[i]){
-        notes[i].changeOnly(to, DateTime.now());
-        Prefs.push(encode());
-        return true;
+        notes[i] = notes[i].changeOnly(to, DateTime.now());
+        Prefs.push(_encode());
+        break;
       }
     }
-    return false;
   }
 
+  void deleteAll(){
+    for(var note in selected){
+      notes.removeWhere((element) => note == element);
+    }
+    selected.clear();
+    Prefs.push(_encode());
+  }
   void clear(){
     notes.clear();
     Prefs.clear();
   }
-  String encode(){
+  String _encode(){
     var json = notes.map((note) => jsonEncode(note.toJson()));
     return jsonEncode(json.toList());
   }
 
-  List<Note> decode(String input){
+  List<Note> _decode(String input){
     List<Note> _notes = [];
     var json = jsonDecode(input);
     for(var note in json){

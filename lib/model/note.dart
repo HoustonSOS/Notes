@@ -20,10 +20,16 @@ class Note with EquatableMixin{
     return Note(body: body, createdOn: createdOn,editedOn: edited);
   }
   Map<String, dynamic> toJson(){
+    DateTime p;
+    if(editedOn == null){
+      p = DateTime(0);
+    }else{
+      p = editedOn!;
+    }
     return {
       'body' : body,
-      'createdOn' : createdOn,
-      'editedOn' : editedOn,
+      'createdOn' : createdOn.toString(),
+      'editedOn' : p.toString(),
     };
   }
 

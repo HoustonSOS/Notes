@@ -12,6 +12,7 @@ class NotesPage extends StatefulWidget {
 class _NotesPageState extends State<NotesPage> {
 
   var model = Notes();
+  bool darkMode = false;
 
   _createDialog(BuildContext context) {
     return showCupertinoDialog(
@@ -58,15 +59,20 @@ class _NotesPageState extends State<NotesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: darkMode ? Colors.black : Colors.yellow.shade50,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.blueGrey,
         title: const Text("Notes"),
+        leadingWidth: 100.0,
+        leading: model.selected.isNotEmpty
+            ? TextButton(onPressed: (){setState(() {model.deleteAll();});}, child: Text("Delete[${model.selected.length}]", style: TextStyle(color: darkMode ? Colors.white : Colors.black),))
+            : IconButton(onPressed: (){setState(() {darkMode = !darkMode;});}, icon: darkMode ? Icon(Icons.wb_sunny) : Icon(Icons.dark_mode), splashRadius: 20.0,),
         actions: [
-          CupertinoButton(
-              child: const Text("Clear", style: TextStyle(color: Colors.white, fontSize: 15),),
+          model.selected.isEmpty
+          ? CupertinoButton(
+              child: Text("Clear", style: TextStyle(color: darkMode ? Colors.white : Colors.black, fontSize: 15),),
               onPressed: (){
                 if(model.notes.isEmpty){
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Nothing to clear"), duration: Duration(milliseconds: 500),));
@@ -76,64 +82,122 @@ class _NotesPageState extends State<NotesPage> {
                   });
                 }
               }
-          ),
+          )
+              : model.selected.length == model.notes.length
+              ? CupertinoButton(
+              child: Text("Unselect", style: TextStyle(color: darkMode ? Colors.white : Colors.black, fontSize: 15),),
+              onPressed: (){
+                setState(() {
+                  model.selected.clear();
+                });
+              }
+          )
+              : CupertinoButton(
+              child: Text("Select All", style: TextStyle(color: darkMode ? Colors.white : Colors.black, fontSize: 15),),
+              onPressed: (){
+                setState(() {
+                  model.selected.addAll(model.notes);
+                });
+              }
+          )
         ],
       ),
       body: model.notes.isEmpty
-          ? const Center(
-              child: Text("No notes", style: TextStyle(color: Colors.white),),
+          ? Center(
+              child: Text("No notes", style: TextStyle(color: darkMode ? Colors.white : Colors.black),),
             )
           : ListView.builder(
           itemCount: model.notes.length,
           itemBuilder: (context, index) {
-            var note = model.notes[index].body;
-            var editing = TextEditingController(text: note);
+            var note = model.notes[index];
+            var selected = model.selected;
+            var date = note.createdOn.toString();
+            var formattedDate = date.split(" ").first;
+            var editing = TextEditingController(text: note.body);
             return Dismissible(
               background: Container(color: Colors.redAccent, child: const Icon(CupertinoIcons.delete, color: Colors.white,),),
-              key: Key(note),
+              key: Key(note.body),
               child: ListTile(
+                tileColor: selected.contains(note) ? Colors.grey : null,
                 leading: const Icon(
                   Icons.circle,
                   color: Colors.blueGrey,
                   size: 15,
                 ),
                 minLeadingWidth: 10,
-                title: Text(note, style: const TextStyle(color: Colors.white),),
+                subtitle: Container(
+                  alignment: Alignment.bottomRight,
+                  child: Text(formattedDate, style: TextStyle(color: Colors.grey),),
+                ),
+                title: Text(note.body, style: TextStyle(color: darkMode ? Colors.white : Colors.black),),
+                onLongPress: (){
+                  if(!selected.contains(note)){
+                    setState(() {
+                      selected.add(note);
+                    });
+                  }else{
+                    setState(() {
+                      selected.remove(note);
+                    });
+                  }
+                },
                 onTap: (){
-                  showCupertinoDialog(
-                      barrierDismissible: true,
-                      context: context,
-                      builder: (context) {
-                        return CupertinoAlertDialog(
-                          title: const Text("Edit"),
-                          content: CupertinoTextField(
-                            expands: true,
-                            maxLines: null,
-                            minLines: null,
-                            controller: editing,
-                          ),
-                          actions: [
-                            CupertinoDialogAction(
-                                onPressed: (){
-                                  model.edit(model.notes[index], editing.text.trim());
-                                  Navigator.pop(context);
-                                },
-                                child: const Icon(CupertinoIcons.pencil, color: Colors.blue,)
+                  if(selected.isEmpty){
+                    showCupertinoDialog(
+                        barrierDismissible: true,
+                        context: context,
+                        builder: (context) {
+                          return CupertinoAlertDialog(
+                            title: const Text("Edit"),
+                            content: CupertinoTextField(
+                              expands: true,
+                              maxLines: null,
+                              minLines: null,
+                              controller: editing,
                             ),
-                            CupertinoDialogAction(
-                                onPressed: (){
-                                  model.delete(model.notes[index]);
-                                },
-                                child: const Icon(CupertinoIcons.delete, color: Colors.blue,)
-                            ),
-                          ],
-                        );
+                            actions: [
+                              CupertinoDialogAction(
+                                  onPressed: (){
+                                    setState(() {
+                                      model.edit(model.notes[index], editing.text.trim());
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Icon(CupertinoIcons.pencil, color: Colors.blue,)
+                              ),
+                              CupertinoDialogAction(
+                                  onPressed: (){
+                                    setState(() {
+                                      model.delete(model.notes[index]);
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Icon(CupertinoIcons.delete, color: Colors.blue,)
+                              ),
+                            ],
+                          );
+                        });
+                  }else{
+                    if(!selected.contains(note)){
+                      setState(() {
+                        selected.add(note);
                       });
+                    }else{
+                      setState(() {
+                        selected.remove(note);
+                      });
+                    }
+                  }
                 },
               ),
               direction: DismissDirection.endToStart,
               onDismissed: (direction){
-                model.delete(model.notes[index]);
+                setState(() {
+                  if(selected.contains(note)){
+                    selected.remove(note);
+                  }
+                  model.delete(model.notes[index]);
+                });
               },
             );
           }),
