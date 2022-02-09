@@ -152,8 +152,7 @@ class _NotesPageState extends State<NotesPage> {
               itemBuilder: (context, index) {
                 var note = model.notes[index];
                 var selected = model.selected;
-                var date = note.createdOn.toString();
-                var formattedDate = date.split(" ");
+                var date = note.createdOn.toString().split(" ");
                 var editing = TextEditingController(text: note.body);
                 return Dismissible(
                   background: Container(
@@ -179,7 +178,7 @@ class _NotesPageState extends State<NotesPage> {
                     subtitle: Container(
                       alignment: Alignment.bottomRight,
                       child: Text(
-                        formattedDate[0],
+                        date[0],
                         style: const TextStyle(color: Colors.grey),
                       ),
                     ),
