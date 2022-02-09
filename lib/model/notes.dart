@@ -6,15 +6,18 @@ import 'note.dart';
 class Notes{
   List<Note> notes = [];
   Set<Note> selected = {};
+
   void init() async {
     var saved = await Prefs.get();
     notes = _decode(saved);
   }
+
   void add(String note){
     var _note = Note(body: note, createdOn: DateTime.now());
     notes.add(_note);
     Prefs.push(_encode());
   }
+
   void delete(Note note){
     for(var item in notes){
       if(note == item){
@@ -42,10 +45,12 @@ class Notes{
     selected.clear();
     Prefs.push(_encode());
   }
+
   void clear(){
     notes.clear();
     Prefs.clear();
   }
+
   String _encode(){
     var json = notes.map((note) => jsonEncode(note.toJson()));
     return jsonEncode(json.toList());
