@@ -19,6 +19,7 @@ class Note with EquatableMixin{
   Note changeOnly(String body, DateTime edited){
     return Note(body: body, createdOn: createdOn,editedOn: edited);
   }
+
   Map<String, dynamic> toJson(){
     DateTime p;
     if(editedOn == null){

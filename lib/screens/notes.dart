@@ -52,10 +52,14 @@ class _NotesPageState extends State<NotesPage> {
   @override
   void initState() {
     super.initState();
-    setState(() {
-      model.init();
+    WidgetsBinding.instance?.addPostFrameCallback((_){
+      setState(() {
+        model.init();
+      });
     });
+    print(model.notes);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -264,6 +268,11 @@ class _NotesPageState extends State<NotesPage> {
         backgroundColor: Colors.blueGrey,
         elevation: 0,
         onPressed: () {
+            if(model.selected.isNotEmpty){
+              setState(() {
+                model.selected.clear();
+              });
+            }
           _createDialog(context);
         },
         child: const Icon(Icons.add),

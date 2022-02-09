@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'package:localization/services/prefs_service.dart';
 import 'note.dart';
 
@@ -7,9 +6,10 @@ class Notes{
   List<Note> notes = [];
   Set<Note> selected = {};
 
-  void init() async {
+  Future<bool> init() async {
     var saved = await Prefs.get();
     notes = _decode(saved);
+    return notes.isNotEmpty;
   }
 
   void add(String note){
